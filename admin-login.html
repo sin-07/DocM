@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login - Dr. Manish Ranjan</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>🏥</text></svg>">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'primary-blue': '#00447c',
+                        'secondary-orange': '#f97425',
+                        'light-bg': '#f6f3ee',
+                        'dark-text': '#032e42',
+                    },
+                    fontFamily: {
+                        'primary': ['Poppins', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #00447c 0%, #0066b8 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .login-container {
+            animation: fadeInUp 0.6s ease-out;
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .input-field {
+            transition: all 0.3s ease;
+        }
+        
+        .input-field:focus {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 68, 124, 0.2);
+        }
+        
+        .btn-login {
+            transition: all 0.3s ease;
+        }
+        
+        .btn-login:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(249, 116, 37, 0.4);
+        }
+        
+        .alert {
+            animation: slideIn 0.4s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container w-full max-w-md px-4">
+        <!-- Login Card -->
+        <div class="bg-white rounded-2xl shadow-2xl overflow-hidden">
+            <!-- Header -->
+            <div class="bg-gradient-to-r from-primary-blue to-blue-600 text-white text-center py-8 px-6">
+                <div class="mb-4">
+                    <i class="fas fa-user-shield text-5xl"></i>
+                </div>
+                <h1 class="text-3xl font-bold mb-2">Admin Login</h1>
+                <p class="text-blue-100">Dr. Manish Ranjan - Gallery Management</p>
+            </div>
+            
+            <!-- Login Form -->
+            <div class="p-8">
+                <!-- Alert Messages -->
+                <div id="alert-container" class="mb-6"></div>
+                
+                <form id="loginForm" class="space-y-6">
+                    <!-- Email Field -->
+                    <div>
+                        <label for="email" class="block text-sm font-semibold text-dark-text mb-2">
+                            <i class="fas fa-envelope text-primary-blue mr-2"></i>Email Address
+                        </label>
+                        <input 
+                            type="email" 
+                            id="email" 
+                            name="email"
+                            class="input-field w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-primary-blue focus:outline-none"
+                            placeholder="admin@example.com"
+                            required
+                            autocomplete="email"
+                        >
+                    </div>
+                    
+                    <!-- Password Field -->
+                    <div>
+                        <label for="password" class="block text-sm font-semibold text-dark-text mb-2">
+                            <i class="fas fa-lock text-primary-blue mr-2"></i>Password
+                        </label>
+                        <div class="relative">
+                            <input 
+                                type="password" 
+                                id="password" 
+                                name="password"
+                                class="input-field w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-primary-blue focus:outline-none pr-12"
+                                placeholder="Enter your password"
+                                required
+                                autocomplete="current-password"
+                            >
+                            <button 
+                                type="button" 
+                                id="togglePassword"
+                                class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-primary-blue transition"
+                            >
+                                <i class="fas fa-eye" id="eyeIcon"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Remember Me -->
+                    <div class="flex items-center justify-between">
+                        <label class="flex items-center cursor-pointer">
+                            <input type="checkbox" id="rememberMe" class="w-4 h-4 text-primary-blue border-gray-300 rounded focus:ring-primary-blue">
+                            <span class="ml-2 text-sm text-gray-700">Remember me</span>
+                        </label>
+                        <a href="#" class="text-sm text-primary-blue hover:text-blue-700 font-medium">Forgot Password?</a>
+                    </div>
+                    
+                    <!-- Submit Button -->
+                    <button 
+                        type="submit" 
+                        id="loginBtn"
+                        class="btn-login w-full bg-secondary-orange hover:bg-orange-600 text-white font-bold py-3 px-6 rounded-lg flex items-center justify-center"
+                    >
+                        <i class="fas fa-sign-in-alt mr-2"></i>
+                        <span id="loginBtnText">Login to Dashboard</span>
+                        <i class="fas fa-spinner fa-spin ml-2 hidden" id="loginSpinner"></i>
+                    </button>
+                </form>
+                
+                <!-- Back to Website -->
+                <div class="mt-6 text-center">
+                    <a href="index.html" class="text-sm text-gray-600 hover:text-primary-blue transition flex items-center justify-center">
+                        <i class="fas fa-arrow-left mr-2"></i>
+                        Back to Website
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Backend Server Notice -->
+        <div class="mt-6 text-center text-white text-sm bg-blue-500/20 backdrop-blur-sm rounded-lg p-4 border border-blue-400">
+            <i class="fas fa-server mr-2"></i>
+            <strong>Backend Required:</strong> Make sure the MySQL backend server is running on <code class="bg-white/20 px-2 py-1 rounded">http://localhost:3000</code>
+        </div>
+        
+        <!-- Info Note -->
+        <div class="mt-4 text-center text-white text-sm bg-white/10 backdrop-blur-sm rounded-lg p-4">
+            <i class="fas fa-info-circle mr-2"></i>
+            Authorized personnel only. All login attempts are logged.
+        </div>
+    </div>
+
+    <!-- API Configuration -->
+    <script src="js/api-config.js"></script>
+    
+    <!-- Login Script -->
+    <script>
+        // Toggle Password Visibility
+        document.getElementById('togglePassword').addEventListener('click', function() {
+            const passwordInput = document.getElementById('password');
+            const eyeIcon = document.getElementById('eyeIcon');
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                eyeIcon.classList.remove('fa-eye');
+                eyeIcon.classList.add('fa-eye-slash');
+            } else {
+                passwordInput.type = 'password';
+                eyeIcon.classList.remove('fa-eye-slash');
+                eyeIcon.classList.add('fa-eye');
+            }
+        });
+        
+        // Show Alert Function
+        function showAlert(message, type = 'error') {
+            const alertContainer = document.getElementById('alert-container');
+            const alertColors = {
+                success: 'bg-green-50 border-green-500 text-green-700',
+                error: 'bg-red-50 border-red-500 text-red-700',
+                info: 'bg-blue-50 border-blue-500 text-blue-700'
+            };
+            
+            const alertIcon = {
+                success: 'fa-check-circle',
+                error: 'fa-exclamation-circle',
+                info: 'fa-info-circle'
+            };
+            
+            alertContainer.innerHTML = `
+                <div class="alert ${alertColors[type]} border-l-4 p-4 rounded-lg flex items-center">
+                    <i class="fas ${alertIcon[type]} mr-3"></i>
+                    <span>${message}</span>
+                </div>
+            `;
+            
+            // Auto-hide after 5 seconds
+            setTimeout(() => {
+                alertContainer.innerHTML = '';
+            }, 5000);
+        }
+        
+        // Login Form Handler
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+            const loginBtn = document.getElementById('loginBtn');
+            const loginBtnText = document.getElementById('loginBtnText');
+            const loginSpinner = document.getElementById('loginSpinner');
+            
+            // Validate inputs
+            if (!email || !password) {
+                showAlert('Please enter both email and password.', 'error');
+                return;
+            }
+            
+            // Disable button and show spinner
+            loginBtn.disabled = true;
+            loginBtnText.textContent = 'Logging in...';
+            loginSpinner.classList.remove('hidden');
+            
+            try {
+                // Call backend API
+                const response = await fetch(API_ENDPOINTS.LOGIN, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    // Save token
+                    setAuthToken(data.token);
+                    
+                    showAlert('✅ Login successful! Redirecting...', 'success');
+                    
+                    // Redirect to dashboard
+                    setTimeout(() => {
+                        window.location.href = 'admin-dashboard.html';
+                    }, 1000);
+                } else {
+                    // Show error message
+                    showAlert(data.error || 'Login failed. Please try again.', 'error');
+                    
+                    // Re-enable button
+                    loginBtn.disabled = false;
+                    loginBtnText.textContent = 'Login to Dashboard';
+                    loginSpinner.classList.add('hidden');
+                }
+                
+            } catch (error) {
+                console.error('❌ Login error:', error);
+                
+                let errorMessage = 'Login failed. ';
+                
+                if (error.message === 'Failed to fetch') {
+                    errorMessage += 'Cannot connect to server. Please ensure the backend server is running on http://localhost:3000';
+                } else {
+                    errorMessage += 'Please try again.';
+                }
+                
+                showAlert(errorMessage, 'error');
+                
+                // Re-enable button
+                loginBtn.disabled = false;
+                loginBtnText.textContent = 'Login to Dashboard';
+                loginSpinner.classList.add('hidden');
+            }
+        });
+        
+        // Check if already logged in
+        document.addEventListener('DOMContentLoaded', async () => {
+            const token = getAuthToken();
+            
+            if (token) {
+                try {
+                    const response = await fetch(API_ENDPOINTS.VERIFY, {
+                        method: 'POST',
+                        headers: getAuthHeaders()
+                    });
+                    
+                    if (response.ok) {
+                        console.log('User already logged in, redirecting...');
+                        window.location.href = 'admin-dashboard.html';
+                    } else {
+                        // Invalid token, remove it
+                        removeAuthToken();
+                    }
+                } catch (error) {
+                    console.error('Token verification failed:', error);
+                    removeAuthToken();
+                }
+            }
+        });
+    </script>
+</body>
+</html>

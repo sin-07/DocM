@@ -90,6 +90,19 @@
     <!-- Custom CSS -->
     <link rel="stylesheet" href="css/styles.css">
     
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    
+    <!-- Firebase Config -->
+    <script src="js/firebase-config.js"></script>
+    
+    <!-- API Config (MySQL Backend) -->
+    <script src="js/api-config.js"></script>
+    
+    <!-- Gallery Script -->
+    <script src="js/gallery.js" defer></script>
+    
     <!-- Custom JavaScript -->
     <script src="js/script.js" defer></script>
     
@@ -555,13 +568,16 @@
         <div class="container mx-auto px-4">
             <div class="text-center mb-8 sm:mb-10 lg:mb-12">
                 <h2 class="text-2xl sm:text-3xl lg:text-4xl font-bold text-dark-text mb-3 sm:mb-4">OrthoPatna Clinic Gallery</h2>
+                <p class="text-gray-text">View our modern facility and patient care environment</p>
             </div>
             
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-                <img src="https://www.orthopatna.com/wp-content/uploads/2021/01/1.jpg" alt="Clinic 1" class="w-full h-48 sm:h-56 lg:h-64 object-cover rounded-lg shadow-lg hover:scale-105 transition-transform duration-300">
-                <img src="https://www.orthopatna.com/wp-content/uploads/2021/01/3.jpg" alt="X-Ray Machine" class="w-full h-48 sm:h-56 lg:h-64 object-cover rounded-lg shadow-lg hover:scale-105 transition-transform duration-300">
-                <img src="https://www.orthopatna.com/wp-content/uploads/2021/01/4.jpg" alt="Blood Test" class="w-full h-48 sm:h-56 lg:h-64 object-cover rounded-lg shadow-lg hover:scale-105 transition-transform duration-300">
-                <img src="https://www.orthopatna.com/wp-content/uploads/2021/01/2-1-1.jpg" alt="Clinic" class="w-full h-48 sm:h-56 lg:h-64 object-cover rounded-lg shadow-lg hover:scale-105 transition-transform duration-300">
+            <!-- Dynamic Gallery Grid - Photos loaded from Firebase -->
+            <div id="dynamic-gallery-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+                <!-- Photos will be dynamically loaded here from Firebase -->
+                <div class="col-span-full text-center py-12">
+                    <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary-blue"></div>
+                    <p class="text-gray-600 mt-4">Loading gallery...</p>
+                </div>
             </div>
         </div>
     </section>
@@ -801,8 +817,17 @@
             </div>
 
             <!-- Copyright -->
-            <div class="border-t border-gray-700 mt-6 sm:mt-8 pt-4 sm:pt-6 text-center text-gray-400 text-xs sm:text-sm">
-                <p>&copy; 2025 - Dr. Manish Ranjan. All rights reserved.</p>
+            <div class="border-t border-gray-700 mt-6 sm:mt-8 pt-4 sm:pt-6">
+                <div class="text-center text-gray-400 text-xs sm:text-sm mb-3">
+                    <p>&copy; 2025 - Dr. Manish Ranjan. All rights reserved.</p>
+                </div>
+                <!-- Admin Login Button (Discreet) -->
+                <div class="text-center">
+                    <a href="admin-login.html" class="inline-flex items-center text-gray-500 hover:text-secondary-orange transition-all duration-300 text-xs opacity-50 hover:opacity-100">
+                        <i class="fas fa-shield-alt mr-2"></i>
+                        <span>Admin</span>
+                    </a>
+                </div>
             </div>
         </div>
     </footer>

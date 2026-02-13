@@ -930,8 +930,8 @@ serviceCards.forEach(card => {
 // CONSOLE INITIALIZATION MESSAGE
 // ==========================================
 
-console.log('%c🏥 Dr. Test Orthopedic Website Loaded Successfully! ', 'background: #00447c; color: #ffffff; font-size: 16px; padding: 10px; border-radius: 5px;');
-console.log('%cVersion 1.0 | Professional Medical Website', 'color: #676767; font-size: 12px;');
+// console.log('%cDr. Test Orthopedic Website Loaded Successfully! ', 'background: #00447c; color: #ffffff; font-size: 16px; padding: 10px; border-radius: 5px;');
+// console.log('%cVersion 1.0 | Professional Medical Website', 'color: #676767; font-size: 12px;');
 
 // ==========================================
 // PERFORMANCE MONITORING
@@ -997,8 +997,8 @@ window.addEventListener('error', function(e) {
     }
     
     if (unsupportedFeatures.length > 0) {
-        console.warn('⚠️ Your browser does not support:', unsupportedFeatures.join(', '));
-        console.warn('⚠️ Please update your browser for the best experience.');
+        console.warn('Your browser does not support:', unsupportedFeatures.join(', '));
+        console.warn('Please update your browser for the best experience.');
     }
 })();
 
