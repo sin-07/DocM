@@ -1,23 +1,31 @@
 {
   "name": "doctor-manish-backend",
   "version": "1.0.0",
-  "description": "Backend server for Doctor Manish website with MySQL",
+  "description": "Backend server for Doctor Manish website with MongoDB",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "nodemon server.js"
+    "dev": "nodemon server.js",
+    "create-admin": "node create-admin.js"
   },
-  "keywords": ["express", "mysql", "api"],
+  "keywords": [
+    "express",
+    "mongodb",
+    "mongoose",
+    "api"
+  ],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "express": "^4.18.2",
-    "mysql2": "^3.6.5",
+    "bcrypt": "^5.1.1",
+    "cloudinary": "^1.41.3",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
-    "bcrypt": "^5.1.1",
+    "express": "^4.18.2",
     "jsonwebtoken": "^9.0.2",
-    "multer": "^1.4.5-lts.1"
+    "mongoose": "^8.0.3",
+    "multer": "^1.4.5-lts.1",
+    "multer-storage-cloudinary": "^4.0.0"
   },
   "devDependencies": {
     "nodemon": "^3.0.2"

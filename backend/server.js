@@ -1,15 +1,20 @@
 /*
 ==========================================
   DOCTOR MANISH BACKEND SERVER
-  Express + MySQL
+  Express + MongoDB (Mongoose)
 ==========================================
 */
 
 const express = require('express');
-const mysql = require('mysql2');
+const mongoose = require('mongoose');
 const cors = require('cors');
 const path = require('path');
+const dns = require('dns');
 require('dotenv').config();
+
+// Force Node.js to use Google DNS (fixes SRV lookup issues on some networks)
+dns.setDefaultResultOrder('ipv4first');
+dns.setServers(['8.8.8.8', '8.8.4.4']);
 
 const app = express();
 
@@ -19,8 +24,10 @@ app.use(cors({
         'http://localhost:5500',
         'http://127.0.0.1:5500',
         'http://localhost:5501',
-        'http://127.0.0.1:5501'
-    ],
+        'http://127.0.0.1:5501',
+        'https://doc-m.vercel.app',
+        process.env.FRONTEND_URL
+    ].filter(Boolean),
     credentials: true
 }));
 app.use(express.json());
@@ -29,37 +36,28 @@ app.use(express.urlencoded({ extended: true }));
 // Serve uploaded files
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// MySQL Connection Pool
-const db = mysql.createPool({
-    host: process.env.DB_HOST,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME,
-    waitForConnections: true,
-    connectionLimit: 10,
-    queueLimit: 0
-});
+// MongoDB Connection
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://aniketsingh9322_db_user:VUFHymiDJAq45jOf@cluster0.2cnpaeo.mongodb.net/doctor_manish_db?appName=Cluster0';
 
-// Test database connection
-db.getConnection((err, connection) => {
-    if (err) {
-        console.error('❌ Database connection failed:', err.message);
+mongoose.connect(MONGODB_URI)
+    .then(() => {
+        console.log('✅ Connected to MongoDB Atlas');
+    })
+    .catch((err) => {
+        console.error('❌ MongoDB connection failed:', err.message);
         console.log('\n⚠️  Please ensure:');
-        console.log('   1. MySQL is running');
-        console.log('   2. Database "doctor_manish_db" exists');
-        console.log('   3. Credentials in .env are correct\n');
-        return;
-    }
-    console.log('✅ Connected to MySQL database');
-    connection.release();
-});
-
-// Make db available to routes
-app.locals.db = db.promise();
+        console.log('   1. Your MongoDB Atlas cluster is running');
+        console.log('   2. Your IP is whitelisted in Atlas');
+        console.log('   3. Connection string in .env is correct\n');
+    });
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
-    res.json({ status: 'ok', message: 'Server is running' });
+    res.json({ 
+        status: 'ok', 
+        message: 'Server is running',
+        database: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected'
+    });
 });
 
 // Routes
@@ -86,5 +84,5 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`🚀 Server running on http://localhost:${PORT}`);
     console.log(`📁 Uploads directory: ${path.join(__dirname, 'uploads')}`);
-    console.log(`🌐 CORS enabled for: ${process.env.FRONTEND_URL || '*'}`);
+    console.log(`🌐 CORS enabled for local dev servers`);
 });

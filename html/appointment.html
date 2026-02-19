@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    
+    <title>Book an Appointment - Dr. Manish Ranjan | Best Orthopedic Surgeon in Patna</title>
+    <meta name="description" content="Book an appointment with Dr. Manish Ranjan, the best orthopedic surgeon in Patna. Easy online booking with available time slots.">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>🏥</text></svg>">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'primary-blue': '#00447c',
+                        'secondary-orange': '#f97425',
+                        'light-bg': '#f6f3ee',
+                        'dark-text': '#032e42',
+                        'gray-text': '#676767',
+                        'dark-gray': '#252628',
+                    },
+                    fontFamily: {
+                        'primary': ['Poppins', 'sans-serif'],
+                        'secondary': ['Roboto', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        /* Custom styles for forms */
+        input, select, textarea {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+        
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #00447c;
+            box-shadow: 0 0 0 3px rgba(0, 68, 124, 0.1);
+        }
+        
+        /* Smooth scroll */
+        html {
+            scroll-behavior: smooth;
+        }
+        
+        /* Show messages */
+        .show {
+            display: block !important;
+        }
+
+        /* ===== Appointment Page Enhancements ===== */
+        .appt-input {
+            width: 100%;
+            padding: 11px 14px;
+            border: 1.5px solid #e5e7eb;
+            border-radius: 10px;
+            font-size: 15px;
+            background: #fafbfc;
+            transition: all 0.25s ease;
+        }
+        .appt-input:hover {
+            border-color: #cbd5e1;
+            background: #fff;
+        }
+        .appt-input:focus {
+            outline: none;
+            border-color: #00447c;
+            background: #fff;
+            box-shadow: 0 0 0 3.5px rgba(0, 68, 124, 0.08);
+        }
+        .appt-input.input-error {
+            border-color: #ef4444 !important;
+            box-shadow: 0 0 0 3px rgba(239,68,68,0.08) !important;
+        }
+        .appt-input.input-success {
+            border-color: #22c55e !important;
+        }
+
+        /* Card entrance animation */
+        @keyframes cardEnter {
+            from { opacity: 0; transform: translateY(24px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        .appt-card-enter {
+            animation: cardEnter 0.5s ease-out both;
+        }
+
+        /* Message entrance */
+        @keyframes msgEnter {
+            from { opacity: 0; transform: scale(0.95) translateY(8px); }
+            to   { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        .appt-msg-enter {
+            animation: msgEnter 0.35s ease-out both;
+        }
+
+        /* Shake animation for validation */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-6px); }
+            40%, 80% { transform: translateX(6px); }
+        }
+        .shake { animation: shake 0.4s ease-in-out; }
+    </style>
+    <!-- Custom JavaScript -->
+    <script src="../js/api-config.js"></script>
+    <script src="../js/script.js" defer></script>
+
+    <!-- Appointment Form Logic -->
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const form = document.getElementById('appointmentBookingForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const submitBtnText = document.getElementById('submitBtnText');
+        const submitSpinner = document.getElementById('submitSpinner');
+        const successMsg = document.getElementById('successMessage');
+        const errorMsg = document.getElementById('errorMessage');
+        const errorText = document.getElementById('errorText');
+        const charCount = document.getElementById('charCount');
+        const serviceSelect = document.getElementById('service');
+        const summaryService = document.getElementById('summaryService');
+        const description = document.getElementById('description');
+
+        // --- Character counter ---
+        if (description && charCount) {
+            description.addEventListener('input', function () {
+                charCount.textContent = this.value.length + ' / 500';
+            });
+        }
+
+        // --- Live service summary ---
+        if (serviceSelect && summaryService) {
+            serviceSelect.addEventListener('change', function () {
+                summaryService.textContent = this.selectedOptions[0].text || 'General Consultation';
+            });
+        }
+
+        // --- Real-time field validation ---
+        form.querySelectorAll('.appt-input').forEach(input => {
+            input.addEventListener('input', function () {
+                clearFieldError(this);
+                if (this.value.trim()) this.classList.add('input-success');
+                else this.classList.remove('input-success');
+            });
+            input.addEventListener('blur', function () {
+                validateField(this);
+            });
+        });
+
+        function validateField(el) {
+            const name = el.getAttribute('name');
+            const val = el.value.trim();
+            clearFieldError(el);
+
+            if (el.required && !val) {
+                setFieldError(el, 'This field is required');
+                return false;
+            }
+            if (name === 'email' && val && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val)) {
+                setFieldError(el, 'Please enter a valid email');
+                return false;
+            }
+            if (name === 'phone' && val && !/^[0-9]{10}$/.test(val)) {
+                setFieldError(el, 'Enter a valid 10-digit number');
+                return false;
+            }
+            if (val) el.classList.add('input-success');
+            return true;
+        }
+
+        function setFieldError(el, msg) {
+            el.classList.add('input-error');
+            el.classList.remove('input-success');
+            const group = el.closest('.appt-field-group');
+            if (group) {
+                const errSpan = group.querySelector('.appt-error');
+                if (errSpan) { errSpan.textContent = msg; errSpan.classList.remove('hidden'); }
+                group.classList.add('shake');
+                setTimeout(() => group.classList.remove('shake'), 400);
+            }
+        }
+
+        function clearFieldError(el) {
+            el.classList.remove('input-error');
+            const group = el.closest('.appt-field-group');
+            if (group) {
+                const errSpan = group.querySelector('.appt-error');
+                if (errSpan) { errSpan.textContent = ''; errSpan.classList.add('hidden'); }
+            }
+        }
+
+        // --- Form submission ---
+        form.addEventListener('submit', async function (e) {
+            e.preventDefault();
+            hideMessages();
+
+            // Validate all required fields
+            let valid = true;
+            form.querySelectorAll('.appt-input[required]').forEach(input => {
+                if (!validateField(input)) valid = false;
+            });
+
+            // Terms checkbox
+            const terms = document.getElementById('termsAccepted');
+            if (!terms.checked) {
+                valid = false;
+                terms.focus();
+            }
+
+            if (!valid) return;
+
+            // Disable button & show spinner
+            submitBtn.disabled = true;
+            submitBtnText.textContent = 'Submitting...';
+            submitSpinner.classList.remove('hidden');
+
+            const payload = {
+                name: form.name.value.trim(),
+                email: form.email.value.trim(),
+                phone: form.phone.value.trim(),
+                description: (form.description.value.trim() || '') +
+                    (form.service.value ? ' [Service: ' + form.service.selectedOptions[0].text + ']' : '')
+            };
+
+            try {
+                const res = await fetch(API_ENDPOINTS.APPOINTMENTS, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await res.json();
+
+                if (res.ok) {
+                    successMsg.classList.remove('hidden');
+                    form.reset();
+                    charCount.textContent = '0 / 500';
+                    summaryService.textContent = 'General Consultation';
+                    form.querySelectorAll('.input-success').forEach(el => el.classList.remove('input-success'));
+                    // Scroll to success message
+                    successMsg.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                } else {
+                    errorText.textContent = data.error || 'Something went wrong. Please try again.';
+                    errorMsg.classList.remove('hidden');
+                }
+            } catch (err) {
+                console.error('Appointment submission error:', err);
+                errorText.textContent = 'Unable to connect to server. Please check your connection or call us at +91-7991153348.';
+                errorMsg.classList.remove('hidden');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtnText.textContent = 'Book Appointment';
+                submitSpinner.classList.add('hidden');
+            }
+        });
+
+        function hideMessages() {
+            successMsg.classList.add('hidden');
+            errorMsg.classList.add('hidden');
+        }
+
+        // --- Reset helper ---
+        window.resetAppointmentForm = function () {
+            form.reset();
+            charCount.textContent = '0 / 500';
+            summaryService.textContent = 'General Consultation';
+            hideMessages();
+            form.querySelectorAll('.appt-input').forEach(el => {
+                el.classList.remove('input-error', 'input-success');
+            });
+            form.querySelectorAll('.appt-error').forEach(el => {
+                el.textContent = ''; el.classList.add('hidden');
+            });
+        };
+    });
+    </script>
+
+</head>
+<body class="font-primary text-dark-text overflow-x-hidden">
+    <!-- Progress Bar -->
+    <div id="progress-bar" class="fixed top-0 left-0 h-1 bg-gradient-to-r from-primary-blue to-secondary-orange z-[99999] transition-all duration-100"></div>
+
+    <!-- Top Contact Bar -->
+    <div class="bg-dark-gray text-white py-2 sm:py-3">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex flex-col sm:flex-row justify-between items-center gap-2 text-xs sm:text-sm">
+                <a href="tel:+91-7991153348" class="hover:text-secondary-orange transition flex items-center"><i class="fas fa-phone-alt mr-2"></i> +91-7991153348</a>
+                <a href="mailto:info@drmanishranjan.com" class="hover:text-secondary-orange transition flex items-center"><i class="fas fa-envelope mr-2"></i> info@drmanishranjan.com</a>
+                <span class="hidden md:flex items-center"><i class="fas fa-clock mr-2"></i> Mon-Sat: 9:00 AM - 6:00 PM</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Header -->
+    <header class="bg-white shadow-md relative z-[1000]">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex flex-col lg:flex-row justify-between items-center py-4 lg:py-6 gap-4">
+                <!-- Logo -->
+                <div class="w-full lg:w-auto flex justify-center lg:justify-start">
+                    <a href="index.html">
+                        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='54'%3E%3Crect fill='%2300447c' width='200' height='54' rx='8'/%3E%3Ctext x='100' y='36' font-family='Arial' font-size='22' font-weight='bold' fill='white' text-anchor='middle'%3EDr. Manish Ranjan%3C/text%3E%3C/svg%3E" alt="Dr. Manish Ranjan" class="h-12 sm:h-14">
+                    </a>
+                </div>
+
+                <!-- Contact Info Cards -->
+                <div class="flex flex-col sm:flex-row gap-4 lg:gap-6 w-full lg:w-auto">
+                    <!-- Call Us Now -->
+                    <div class="flex items-center gap-3 bg-light-bg sm:bg-transparent p-3 sm:p-0 rounded-lg">
+                        <div class="w-12 h-12 rounded-full bg-primary-blue text-white flex items-center justify-center flex-shrink-0">
+                            <i class="fas fa-phone-alt text-lg"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs text-gray-text">Call Us Now</p>
+                            <a href="tel:+91-7991153348" class="text-base font-semibold text-dark-text hover:text-primary-blue transition">+91-7991153348</a>
+                        </div>
+                    </div>
+
+                    <!-- Email -->
+                    <div class="flex items-center gap-3 bg-light-bg sm:bg-transparent p-3 sm:p-0 rounded-lg">
+                        <div class="w-12 h-12 rounded-full bg-primary-blue text-white flex items-center justify-center flex-shrink-0">
+                            <i class="fas fa-envelope text-lg"></i>
+                        </div>
+                        <div>
+                            <a href="mailto:info@drmanishranjan.com" class="text-base font-semibold text-dark-text hover:text-primary-blue transition block">info@drmanishranjan.com</a>
+                            <p class="text-xs text-gray-text">Drop Us a Line</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Social Icons -->
+                <div class="flex gap-2">
+                    <a href="https://www.facebook.com" target="_blank" class="w-10 h-10 rounded-full bg-gray-100 hover:bg-primary-blue text-gray-600 hover:text-white flex items-center justify-center transition" aria-label="Facebook">
+                        <i class="fab fa-facebook-f"></i>
+                    </a>
+                    <a href="https://www.instagram.com" target="_blank" class="w-10 h-10 rounded-full bg-gray-100 hover:bg-primary-blue text-gray-600 hover:text-white flex items-center justify-center transition" aria-label="Instagram">
+                        <i class="fab fa-instagram"></i>
+                    </a>
+                    <a href="https://www.youtube.com" target="_blank" class="w-10 h-10 rounded-full bg-gray-100 hover:bg-primary-blue text-gray-600 hover:text-white flex items-center justify-center transition" aria-label="YouTube">
+                        <i class="fab fa-youtube"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Navigation Bar -->
+    <nav class="bg-primary-blue sticky top-0 z-[999] shadow-lg">
+        <div class="container mx-auto px-4">
+            <div class="flex justify-center items-center">
+                <button class="md:hidden text-white p-4" id="mobile-menu-btn" aria-label="Toggle Menu"><i class="fas fa-bars text-xl"></i></button>
+                <ul class="hidden md:flex flex-wrap items-center justify-center gap-1 lg:gap-2 py-4" id="nav-menu">
+                    <a href="index.html" class="text-white hover:text-secondary-orange transition-all duration-300 font-medium px-3 py-2">Home</a>
+                    <a href="index.html#about" class="text-white hover:text-secondary-orange transition-all duration-300 font-medium px-3 py-2">About Doctor</a>
+                    <div class="relative group">
+                        <button class="text-white hover:text-secondary-orange transition-all duration-300 font-medium px-3 py-2">Our Services <i class="fas fa-chevron-down text-xs ml-1 transition-transform duration-300 group-hover:rotate-180"></i></button>
+                        <div class="absolute opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform group-hover:translate-y-0 -translate-y-2 bg-white text-dark-text shadow-2xl rounded-lg mt-2 w-full sm:w-[500px] lg:w-[600px] z-50">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4">
+                                <div>
+                                    <h4 class="text-primary-blue font-bold text-base px-4 py-2 mb-2 border-b border-gray-200">Orthopedic Surgeries</h4>
+                                    <a href="knee-replacement.html" class="block px-4 py-2 hover:bg-light-bg hover:text-primary-blue hover:translate-x-1 transition-all duration-200 rounded">Knee Replacement</a>
+                                    <a href="hip-replacement.html" class="block px-4 py-2 hover:bg-light-bg hover:text-primary-blue hover:translate-x-1 transition-all duration-200 rounded">Hip Replacement</a>
+                                    <a href="hip-preservation.html" class="block px-4 py-2 hover:bg-light-bg hover:text-primary-blue hover:translate-x-1 transition-all duration-200 rounded">Hip Preservation</a>
+                                    <a href="acl-reconstruction.html" class="block px-4 py-2 hover:bg-light-bg hover:text-primary-blue hover:translate-x-1 transition-all duration-200 rounded">ACL Reconstruction</a>
+                                    <a href="arthroscopy-surgery.html" class="block px-4 py-2 hover:bg-light-bg hover:text-primary-blue hover:translate-x-1 transition-all duration-200 rounded">Arthroscopy Surgery</a>
+                                    <a href="trauma-surgery.html" class="block px-4 py-2 hover:bg-light-bg hover:text-primary-blue hover:translate-x-1 transition-all duration-200 rounded">Trauma Surgery</a>
+                                    <a href="sports-injury-treatment.html" class="block px-4 py-2 hover:bg-light-bg hover:text-primary-blue hover:translate-x-1 transition-all duration-200 rounded">Sports Injury Treatment</a>
+                                </div>
+                                <div>
+                                    <h4 class="text-primary-blue font-bold text-base px-4 py-2 mb-2 border-b border-gray-200">Treatments & Services</h4>
+                                    <a href="arthritis-treatment.html" class="block px-4 py-2 hover:bg-light-bg hover:text-primary-blue hover:translate-x-1 transition-all duration-200 rounded">Arthritis Treatment</a>
+                                    <a href="back-pain-treatment.html" class="block px-4 py-2 hover:bg-light-bg hover:text-primary-blue hover:translate-x-1 transition-all duration-200 rounded">Back Pain Treatment</a>
+                                    <a href="neck-pain-treatment.html"  class="block px-4 py-2 hover:bg-light-bg hover:text-primary-blue hover:translate-x-1 transition-all duration-200 rounded">Neck Pain Treatment</a>
+                                    <a href="prp-treatment.html" class="block px-4 py-2 hover:bg-light-bg hover:text-primary-blue hover:translate-x-1 transition-all duration-200 rounded">PRP Treatment</a>
+                                    <a href="plaster-casts.html" class="block px-4 py-2 hover:bg-light-bg hover:text-primary-blue hover:translate-x-1 transition-all duration-200 rounded">Plaster Casts</a>
+                                    <a href="blood-test.html" class="block px-4 py-2 hover:bg-light-bg hover:text-primary-blue hover:translate-x-1 transition-all duration-200 rounded">Blood Test</a>
+                                    <a href="xray-services.html" class="block px-4 py-2 hover:bg-light-bg hover:text-primary-blue hover:translate-x-1 transition-all duration-200 rounded">X-ray Services</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <a href="index.html#gallery" class="text-white hover:text-secondary-orange transition-all duration-300 font-medium px-3 py-2">Gallery</a>
+                    <a href="index.html#testimonials" class="text-white hover:text-secondary-orange transition-all duration-300 font-medium px-3 py-2">Testimonials</a>
+                    <a href="index.html#faq" class="text-white hover:text-secondary-orange transition-all duration-300 font-medium px-3 py-2">FAQ</a>
+                    <a href="appointment.html" class="bg-secondary-orange text-white hover:bg-orange-600 px-6 py-2 rounded-lg transition-all duration-300 font-medium hover:shadow-lg hover:-translate-y-0.5">Book an Appointment</a>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Mobile Menu -->
+    <div id="mobile-menu" class="fixed inset-y-0 left-0 w-80 bg-white text-dark-text transform -translate-x-full transition-transform duration-300 z-[1100] overflow-y-auto shadow-2xl">
+        <div class="bg-primary-blue text-white p-4 flex justify-between items-center">
+            <h3 class="text-lg font-bold">Menu</h3>
+            <button id="close-mobile-menu" class="text-white text-2xl hover:text-secondary-orange transition-colors w-8 h-8 flex items-center justify-center">&times;</button>
+        </div>
+        
+        <nav class="p-4">
+            <a href="index.html" class="flex items-center py-3 px-4 text-dark-text hover:bg-primary-blue hover:text-white rounded-lg transition-all mb-1">
+                <i class="fas fa-home w-6 text-primary-blue mr-3"></i>
+                <span class="font-medium">Home</span>
+            </a>
+            
+            <a href="#about" class="flex items-center py-3 px-4 text-dark-text hover:bg-primary-blue hover:text-white rounded-lg transition-all mb-1">
+                <i class="fas fa-user-md w-6 text-primary-blue mr-3"></i>
+                <span class="font-medium">About Doctor</span>
+            </a>
+            
+            <!-- Services Dropdown -->
+            <details class="mb-1">
+                <summary class="flex items-center justify-between py-3 px-4 text-dark-text hover:bg-gray-100 rounded-lg transition-all cursor-pointer">
+                    <div class="flex items-center">
+                        <i class="fas fa-stethoscope w-6 text-primary-blue mr-3"></i>
+                        <span class="font-medium">Our Services</span>
+                    </div>
+                    <i class="fas fa-chevron-down text-xs"></i>
+                </summary>
+                <div class="pl-6 mt-2 space-y-1">
+                    <a href="knee-replacement.html" class="block py-2 px-4 text-sm text-gray-700 hover:text-primary-blue hover:bg-gray-50 rounded">Knee Replacement</a>
+                    <a href="hip-replacement.html" class="block py-2 px-4 text-sm text-gray-700 hover:text-primary-blue hover:bg-gray-50 rounded">Hip Replacement</a>
+                    <a href="hip-preservation.html" class="block py-2 px-4 text-sm text-gray-700 hover:text-primary-blue hover:bg-gray-50 rounded">Hip Preservation</a>
+                    <a href="acl-reconstruction.html" class="block py-2 px-4 text-sm text-gray-700 hover:text-primary-blue hover:bg-gray-50 rounded">ACL Reconstruction</a>
+                    <a href="arthroscopy-surgery.html" class="block py-2 px-4 text-sm text-gray-700 hover:text-primary-blue hover:bg-gray-50 rounded">Arthroscopy Surgery</a>
+                    <a href="trauma-surgery.html" class="block py-2 px-4 text-sm text-gray-700 hover:text-primary-blue hover:bg-gray-50 rounded">Trauma Surgery</a>
+                    <a href="sports-injury-treatment.html" class="block py-2 px-4 text-sm text-gray-700 hover:text-primary-blue hover:bg-gray-50 rounded">Sports Injury</a>
+                    <a href="arthritis-treatment.html" class="block py-2 px-4 text-sm text-gray-700 hover:text-primary-blue hover:bg-gray-50 rounded">Arthritis Treatment</a>
+                    <a href="back-pain-treatment.html" class="block py-2 px-4 text-sm text-gray-700 hover:text-primary-blue hover:bg-gray-50 rounded">Back Pain</a>
+                    <a href="neck-pain-treatment.html" class="block py-2 px-4 text-sm text-gray-700 hover:text-primary-blue hover:bg-gray-50 rounded">Neck Pain</a>
+                    <a href="prp-treatment.html" class="block py-2 px-4 text-sm text-gray-700 hover:text-primary-blue hover:bg-gray-50 rounded">PRP Treatment</a>
+                    <a href="plaster-casts.html" class="block py-2 px-4 text-sm text-gray-700 hover:text-primary-blue hover:bg-gray-50 rounded">Plaster Casts</a>
+                    <a href="blood-test.html" class="block py-2 px-4 text-sm text-gray-700 hover:text-primary-blue hover:bg-gray-50 rounded">Blood Test</a>
+                    <a href="xray-services.html" class="block py-2 px-4 text-sm text-gray-700 hover:text-primary-blue hover:bg-gray-50 rounded">X-Ray Services</a>
+                </div>
+            </details>
+            
+            <a href="#gallery" class="flex items-center py-3 px-4 text-dark-text hover:bg-primary-blue hover:text-white rounded-lg transition-all mb-1">
+                <i class="fas fa-images w-6 text-primary-blue mr-3"></i>
+                <span class="font-medium">Gallery</span>
+            </a>
+            
+            <a href="#testimonials" class="flex items-center py-3 px-4 text-dark-text hover:bg-primary-blue hover:text-white rounded-lg transition-all mb-1">
+                <i class="fas fa-comments w-6 text-primary-blue mr-3"></i>
+                <span class="font-medium">Testimonials</span>
+            </a>
+            
+            <a href="#faq" class="flex items-center py-3 px-4 text-dark-text hover:bg-primary-blue hover:text-white rounded-lg transition-all mb-1">
+                <i class="fas fa-question-circle w-6 text-primary-blue mr-3"></i>
+                <span class="font-medium">FAQ</span>
+            </a>
+            
+            <a href="appointment.html" class="flex items-center justify-center py-3 px-4 bg-secondary-orange text-white hover:bg-orange-600 rounded-lg transition-all mt-4 font-semibold">
+                <i class="fas fa-calendar-check mr-2"></i>
+                Book Appointment
+            </a>
+            
+            <!-- Contact Info at Bottom -->
+            <div class="mt-6 pt-4 border-t border-gray-200">
+                <a href="tel:+91-7991153348" class="flex items-center py-2 text-sm text-gray-600 hover:text-primary-blue">
+                    <i class="fas fa-phone text-primary-blue mr-3"></i>
+                    <span>+91-7991153348</span>
+                </a>
+                <a href="mailto:info@drmanishranjan.com" class="flex items-center py-2 text-sm text-gray-600 hover:text-primary-blue">
+                    <i class="fas fa-envelope text-primary-blue mr-3"></i>
+                    <span>info@drmanishranjan.com</span>
+                </a>
+            </div>
+        </nav>
+    </div>
+
+    <!-- Mobile Menu Overlay -->
+    <div id="mobile-menu-overlay" class="fixed inset-0 bg-black/50 z-40 opacity-0 invisible transition-all duration-300"></div>
+
+    <!-- Appointment Hero Section -->
+    <section class="relative h-56 sm:h-64 md:h-72 bg-gradient-to-br from-primary-blue via-blue-700 to-blue-900 flex items-center justify-center overflow-hidden">
+        <!-- Decorative elements -->
+        <div class="absolute inset-0 overflow-hidden">
+            <div class="absolute -top-20 -right-20 w-72 h-72 bg-white/5 rounded-full"></div>
+            <div class="absolute -bottom-32 -left-16 w-96 h-96 bg-white/5 rounded-full"></div>
+            <div class="absolute top-1/2 left-1/4 w-3 h-3 bg-secondary-orange/50 rounded-full animate-pulse"></div>
+            <div class="absolute top-1/3 right-1/3 w-2 h-2 bg-white/30 rounded-full animate-pulse" style="animation-delay:.5s"></div>
+        </div>
+        <div class="relative max-w-7xl mx-auto px-4 text-center">
+            <div class="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-1.5 rounded-full mb-4 text-white/90 text-xs sm:text-sm">
+                <i class="fas fa-calendar-check"></i> Schedule Your Visit Today
+            </div>
+            <h1 class="text-white text-3xl sm:text-4xl md:text-5xl font-bold mb-3">Book an Appointment</h1>
+            <div class="text-white/70 text-sm sm:text-base">
+                <a href="index.html" class="hover:text-white transition">Home</a>
+                <i class="fas fa-chevron-right mx-2 text-xs"></i>
+                <span class="text-white">Book an Appointment</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- Appointment Page -->
+    <section class="py-10 sm:py-16 bg-light-bg">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
+
+                <!-- ===== LEFT: Appointment Form ===== -->
+                <div class="lg:col-span-2">
+                    <div class="bg-white rounded-2xl shadow-lg overflow-hidden appt-card-enter">
+                        <!-- Form Header -->
+                        <div class="bg-gradient-to-r from-primary-blue to-blue-600 p-5 sm:p-7 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                            <div class="text-white">
+                                <h2 class="text-xl sm:text-2xl font-bold mb-1">Schedule Your Consultation</h2>
+                                <p class="text-white/80 text-sm">Fill in your details and we'll confirm your appointment shortly.</p>
+                            </div>
+                            <div class="flex-shrink-0 bg-white/15 backdrop-blur-sm border border-white/20 text-white px-4 py-2 rounded-xl text-center">
+                                <span class="block text-xs uppercase tracking-wider opacity-80">Consultation Fee</span>
+                                <span class="text-xl font-bold">₹500</span>
+                            </div>
+                        </div>
+
+                        <!-- Form Body -->
+                        <div class="p-5 sm:p-7 md:p-9">
+                            <form id="appointmentBookingForm" class="space-y-5" data-form-type="appointment">
+
+                                <!-- Row: Name & Email -->
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                                    <!-- Name -->
+                                    <div class="appt-field-group">
+                                        <label for="name" class="block mb-1.5 text-sm font-semibold text-dark-text">
+                                            Full Name <span class="text-red-500">*</span>
+                                        </label>
+                                        <div class="relative">
+                                            <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"><i class="fas fa-user"></i></span>
+                                            <input type="text" id="name" name="name" placeholder="John Doe" required minlength="2" maxlength="100"
+                                                class="appt-input !pl-10">
+                                        </div>
+                                        <span class="appt-error hidden text-red-500 text-xs mt-1"></span>
+                                    </div>
+
+                                    <!-- Email -->
+                                    <div class="appt-field-group">
+                                        <label for="email" class="block mb-1.5 text-sm font-semibold text-dark-text">
+                                            Email Address <span class="text-red-500">*</span>
+                                        </label>
+                                        <div class="relative">
+                                            <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"><i class="fas fa-envelope"></i></span>
+                                            <input type="email" id="email" name="email" placeholder="you@example.com" required
+                                                class="appt-input !pl-10">
+                                        </div>
+                                        <span class="appt-error hidden text-red-500 text-xs mt-1"></span>
+                                    </div>
+                                </div>
+
+                                <!-- Row: Phone & Service -->
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                                    <!-- Phone -->
+                                    <div class="appt-field-group">
+                                        <label for="phone" class="block mb-1.5 text-sm font-semibold text-dark-text">
+                                            Phone Number <span class="text-red-500">*</span>
+                                        </label>
+                                        <div class="relative">
+                                            <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"><i class="fas fa-phone"></i></span>
+                                            <input type="tel" id="phone" name="phone" placeholder="10-digit number" required pattern="[0-9]{10}" maxlength="10"
+                                                class="appt-input !pl-10">
+                                        </div>
+                                        <span class="appt-error hidden text-red-500 text-xs mt-1"></span>
+                                    </div>
+
+                                    <!-- Service Type -->
+                                    <div class="appt-field-group">
+                                        <label for="service" class="block mb-1.5 text-sm font-semibold text-dark-text">
+                                            Service Required
+                                        </label>
+                                        <div class="relative">
+                                            <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"><i class="fas fa-stethoscope"></i></span>
+                                            <select id="service" name="service" class="appt-input !pl-10 appearance-none cursor-pointer">
+                                                <option value="">Select a service (optional)</option>
+                                                <option value="knee-replacement">Knee Replacement</option>
+                                                <option value="hip-replacement">Hip Replacement</option>
+                                                <option value="hip-preservation">Hip Preservation</option>
+                                                <option value="acl-reconstruction">ACL Reconstruction</option>
+                                                <option value="arthroscopy">Arthroscopy Surgery</option>
+                                                <option value="trauma-surgery">Trauma Surgery</option>
+                                                <option value="sports-injury">Sports Injury Treatment</option>
+                                                <option value="arthritis">Arthritis Treatment</option>
+                                                <option value="back-pain">Back Pain Treatment</option>
+                                                <option value="neck-pain">Neck Pain Treatment</option>
+                                                <option value="prp-treatment">PRP Treatment</option>
+                                                <option value="general-consultation">General Consultation</option>
+                                            </select>
+                                            <span class="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"><i class="fas fa-chevron-down text-xs"></i></span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Description -->
+                                <div class="appt-field-group">
+                                    <label for="description" class="block mb-1.5 text-sm font-semibold text-dark-text">
+                                        Describe Your Concern
+                                    </label>
+                                    <div class="relative">
+                                        <span class="absolute left-3.5 top-3.5 text-gray-400"><i class="fas fa-comment-medical"></i></span>
+                                        <textarea id="description" name="description"
+                                            placeholder="Please describe your symptoms, reason for visit, or any specific concerns..."
+                                            rows="4" maxlength="500"
+                                            class="appt-input !pl-10 resize-none"></textarea>
+                                    </div>
+                                    <div class="flex justify-end mt-1">
+                                        <span class="text-xs text-gray-400" id="charCount">0 / 500</span>
+                                    </div>
+                                </div>
+
+                                <!-- Divider -->
+                                <div class="relative py-2">
+                                    <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-gray-200"></div></div>
+                                    <div class="relative flex justify-center"><span class="bg-white px-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">Booking Overview</span></div>
+                                </div>
+
+                                <!-- Booking Summary Card -->
+                                <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-4 sm:p-5 border border-blue-100">
+                                    <div class="flex items-center gap-3 mb-3">
+                                        <div class="w-8 h-8 rounded-full bg-primary-blue/10 flex items-center justify-center">
+                                            <i class="fas fa-receipt text-primary-blue text-sm"></i>
+                                        </div>
+                                        <h4 class="font-semibold text-dark-text">Appointment Summary</h4>
+                                    </div>
+                                    <div class="space-y-2 text-sm">
+                                        <div class="flex justify-between text-gray-600">
+                                            <span>Consultation Type</span>
+                                            <span class="font-medium text-dark-text" id="summaryService">General Consultation</span>
+                                        </div>
+                                        <div class="flex justify-between text-gray-600">
+                                            <span>Consultation Fee</span>
+                                            <span class="font-semibold text-primary-blue">₹500</span>
+                                        </div>
+                                        <div class="flex justify-between text-gray-600">
+                                            <span>Confirmation</span>
+                                            <span class="font-medium text-green-600">Via Phone/Email</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Terms & Conditions -->
+                                <label for="termsAccepted" class="flex items-start gap-3 cursor-pointer group select-none">
+                                    <input type="checkbox" id="termsAccepted" name="terms_accepted" value="1" required
+                                        class="mt-0.5 w-5 h-5 rounded border-gray-300 text-primary-blue focus:ring-primary-blue cursor-pointer accent-primary-blue">
+                                    <span class="text-sm text-gray-600 group-hover:text-dark-text transition">
+                                        I agree to the <a href="#" class="text-primary-blue hover:underline font-medium">Terms &amp; Conditions</a> and <a href="#" class="text-primary-blue hover:underline font-medium">Privacy Policy</a>
+                                    </span>
+                                </label>
+
+                                <!-- Action Buttons -->
+                                <div class="flex flex-col sm:flex-row gap-3 pt-2">
+                                    <button type="submit" id="submitBtn"
+                                        class="flex-1 inline-flex items-center justify-center gap-2 px-8 py-3.5 bg-gradient-to-r from-primary-blue to-blue-600 hover:from-blue-700 hover:to-blue-800 text-white rounded-xl font-semibold transition-all duration-300 shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:translate-y-0">
+                                        <i class="fas fa-calendar-check"></i>
+                                        <span id="submitBtnText">Book Appointment</span>
+                                        <svg id="submitSpinner" class="hidden animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                                        </svg>
+                                    </button>
+                                    <button type="button" id="resetBtn"
+                                        class="inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-white hover:bg-gray-50 text-gray-600 border border-gray-200 rounded-xl font-semibold transition-all duration-300 hover:border-gray-300"
+                                        onclick="resetAppointmentForm()">
+                                        <i class="fas fa-redo-alt text-xs"></i> Reset
+                                    </button>
+                                </div>
+
+                                <!-- Success Message -->
+                                <div class="hidden" id="successMessage">
+                                    <div class="bg-green-50 border border-green-200 rounded-xl p-5 mt-4 appt-msg-enter">
+                                        <div class="flex items-start gap-3">
+                                            <div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
+                                                <i class="fas fa-check-circle text-green-600 text-lg"></i>
+                                            </div>
+                                            <div>
+                                                <h4 class="text-green-800 font-bold text-base mb-1">Appointment Request Submitted!</h4>
+                                                <p class="text-green-700 text-sm">Your appointment has been received successfully. Our team will contact you within 24 hours to confirm the date and time.</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Error Message -->
+                                <div class="hidden" id="errorMessage">
+                                    <div class="bg-red-50 border border-red-200 rounded-xl p-5 mt-4 appt-msg-enter">
+                                        <div class="flex items-start gap-3">
+                                            <div class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
+                                                <i class="fas fa-exclamation-circle text-red-600 text-lg"></i>
+                                            </div>
+                                            <div>
+                                                <h4 class="text-red-800 font-bold text-base mb-1">Submission Failed</h4>
+                                                <p class="text-red-700 text-sm" id="errorText">Something went wrong. Please try again or contact us directly at +91-7991153348.</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ===== RIGHT: Sidebar ===== -->
+                <div class="lg:col-span-1 space-y-6">
+                    <!-- Doctor Info Card -->
+                    <div class="bg-white rounded-2xl shadow-lg overflow-hidden appt-card-enter" style="animation-delay:.15s">
+                        <div class="bg-gradient-to-br from-primary-blue to-blue-700 p-5 text-center">
+                            <div class="w-20 h-20 mx-auto rounded-full bg-white/20 border-2 border-white/40 flex items-center justify-center mb-3">
+                                <i class="fas fa-user-md text-white text-3xl"></i>
+                            </div>
+                            <h3 class="text-white font-bold text-lg">Dr. Manish Ranjan</h3>
+                            <p class="text-white/80 text-sm">MS Orthopaedics</p>
+                        </div>
+                        <div class="p-5 space-y-3">
+                            <div class="flex items-center gap-3 text-sm">
+                                <div class="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center flex-shrink-0">
+                                    <i class="fas fa-award text-primary-blue text-xs"></i>
+                                </div>
+                                <span class="text-gray-600">Specialist in Joint Replacement &amp; Trauma Surgery</span>
+                            </div>
+                            <div class="flex items-center gap-3 text-sm">
+                                <div class="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center flex-shrink-0">
+                                    <i class="fas fa-hospital text-primary-blue text-xs"></i>
+                                </div>
+                                <span class="text-gray-600">Jeevandan Health OPD, Patna</span>
+                            </div>
+                            <div class="flex items-center gap-3 text-sm">
+                                <div class="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center flex-shrink-0">
+                                    <i class="fas fa-briefcase-medical text-primary-blue text-xs"></i>
+                                </div>
+                                <span class="text-gray-600">10+ Years of Experience</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Clinic Hours Card -->
+                    <div class="bg-white rounded-2xl shadow-lg p-5 appt-card-enter" style="animation-delay:.25s">
+                        <div class="flex items-center gap-3 mb-4">
+                            <div class="w-10 h-10 rounded-xl bg-green-50 flex items-center justify-center">
+                                <i class="fas fa-clock text-green-600"></i>
+                            </div>
+                            <h3 class="font-bold text-dark-text">Clinic Hours</h3>
+                        </div>
+                        <div class="space-y-2.5 text-sm">
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-600">Monday – Saturday</span>
+                                <span class="font-semibold text-dark-text bg-green-50 px-2.5 py-0.5 rounded-full text-xs">9 AM – 6 PM</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-600">Sunday</span>
+                                <span class="font-semibold text-red-500 bg-red-50 px-2.5 py-0.5 rounded-full text-xs">Closed</span>
+                            </div>
+                            <div class="flex justify-between items-center pt-1 border-t border-gray-100">
+                                <span class="text-gray-600">Emergency</span>
+                                <span class="font-semibold text-orange-600 bg-orange-50 px-2.5 py-0.5 rounded-full text-xs">24/7 Available</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Why Choose Us Card -->
+                    <div class="bg-white rounded-2xl shadow-lg p-5 appt-card-enter" style="animation-delay:.35s">
+                        <div class="flex items-center gap-3 mb-4">
+                            <div class="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center">
+                                <i class="fas fa-star text-secondary-orange"></i>
+                            </div>
+                            <h3 class="font-bold text-dark-text">Why Choose Us?</h3>
+                        </div>
+                        <div class="space-y-3">
+                            <div class="flex items-start gap-2.5">
+                                <i class="fas fa-check-circle text-green-500 mt-0.5 text-sm"></i>
+                                <span class="text-sm text-gray-600">Advanced surgical techniques with minimal recovery time</span>
+                            </div>
+                            <div class="flex items-start gap-2.5">
+                                <i class="fas fa-check-circle text-green-500 mt-0.5 text-sm"></i>
+                                <span class="text-sm text-gray-600">5000+ successful surgeries performed</span>
+                            </div>
+                            <div class="flex items-start gap-2.5">
+                                <i class="fas fa-check-circle text-green-500 mt-0.5 text-sm"></i>
+                                <span class="text-sm text-gray-600">Personalized treatment plans for every patient</span>
+                            </div>
+                            <div class="flex items-start gap-2.5">
+                                <i class="fas fa-check-circle text-green-500 mt-0.5 text-sm"></i>
+                                <span class="text-sm text-gray-600">State-of-the-art OPD facility in Patna</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quick Contact Card -->
+                    <div class="bg-gradient-to-br from-secondary-orange to-orange-600 rounded-2xl shadow-lg p-5 text-white appt-card-enter" style="animation-delay:.45s">
+                        <h3 class="font-bold text-lg mb-3">Need Urgent Help?</h3>
+                        <p class="text-white/90 text-sm mb-4">For emergencies or immediate assistance, reach us directly:</p>
+                        <a href="tel:+91-7991153348" class="flex items-center gap-3 bg-white/20 hover:bg-white/30 transition rounded-xl p-3 mb-2">
+                            <div class="w-9 h-9 rounded-lg bg-white/20 flex items-center justify-center flex-shrink-0">
+                                <i class="fas fa-phone-alt"></i>
+                            </div>
+                            <div>
+                                <span class="text-xs opacity-80">Call Now</span>
+                                <span class="block font-semibold">+91-7991153348</span>
+                            </div>
+                        </a>
+                        <a href="https://wa.me/917991153348" target="_blank" class="flex items-center gap-3 bg-white/20 hover:bg-white/30 transition rounded-xl p-3">
+                            <div class="w-9 h-9 rounded-lg bg-white/20 flex items-center justify-center flex-shrink-0">
+                                <i class="fab fa-whatsapp text-lg"></i>
+                            </div>
+                            <div>
+                                <span class="text-xs opacity-80">WhatsApp</span>
+                                <span class="block font-semibold">Chat with us</span>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-dark-gray text-white relative overflow-hidden">
+        <!-- Background Image -->
+        <div class="absolute inset-0 opacity-10">
+            <img src="https://www.orthopatna.com/wp-content/uploads/2021/01/Orthopedics-apna-hospital-banner-5.jpg" alt="Footer Background" class="w-full h-full object-cover">
+        </div>
+        
+        <div class="relative container mx-auto px-4 py-12">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
+                <!-- About Section -->
+                <div class="sm:col-span-2">
+                    <h3 class="text-xl font-bold mb-4">About Dr. Manish Ranjan</h3>
+                    <p class="text-gray-300 mb-4 text-sm sm:text-base">Dr. Manish Ranjan is a highly skilled orthopedic surgeon specializing in joint replacements, trauma surgery, and sports medicine. With extensive training and years of experience, Dr. Gaurav provides exceptional orthopedic care with a patient-first approach at Jeevandan Health OPD, Patna.</p>
+                    <div class="flex space-x-4">
+                        <a href="https://www.facebook.com/profile.php?id=100091876871414" target="_blank" class="w-10 h-10 bg-primary-blue rounded-full flex items-center justify-center hover:bg-secondary-orange transition">
+                            <i class="fab fa-facebook-f"></i>
+                        </a>
+                        <a href="https://www.instagram.com/dr.ashwinigaurav" target="_blank" class="w-10 h-10 bg-primary-blue rounded-full flex items-center justify-center hover:bg-secondary-orange transition">
+                            <i class="fab fa-instagram"></i>
+                        </a>
+                        <a href="https://www.youtube.com/@dr.ashwinigaurav" target="_blank" class="w-10 h-10 bg-primary-blue rounded-full flex items-center justify-center hover:bg-secondary-orange transition">
+                            <i class="fab fa-youtube"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Our Services -->
+                <div>
+                    <h3 class="text-lg sm:text-xl font-bold mb-3 sm:mb-4">Our Services</h3>
+                    <ul class="space-y-2 text-sm sm:text-base">
+                        <li><a href="knee-replacement.html" class="text-gray-300 hover:text-secondary-orange transition">Knee Replacement</a></li>
+                        <li><a href="hip-replacement.html" class="text-gray-300 hover:text-secondary-orange transition">Hip Replacement</a></li>
+                        <li><a href="hip-preservation.html" class="text-gray-300 hover:text-secondary-orange transition">Hip Preservation</a></li>
+                        <li><a href="trauma-surgery.html" class="text-gray-300 hover:text-secondary-orange transition">Trauma Surgery</a></li>
+                        <li><a href="arthritis-treatment.html" class="text-gray-300 hover:text-secondary-orange transition">Arthritis</a></li>
+                        <li><a href="plaster-casts.html" class="text-gray-300 hover:text-secondary-orange transition">Plaster Casts</a></li>
+                        <li><a href="prp-treatment.html" class="text-gray-300 hover:text-secondary-orange transition">PRP Treatment</a></li>
+                        <li><a href="blood-test.html" class="text-gray-300 hover:text-secondary-orange transition">Blood Test</a></li>
+                        <li><a href="xray-services.html" class="text-gray-300 hover:text-secondary-orange transition">X-ray Services</a></li>
+                        <li><a href="acl-reconstruction.html" class="text-gray-300 hover:text-secondary-orange transition">ACL Reconstruction</a></li>
+                        <li><a href="arthroscopy-surgery.html" class="text-gray-300 hover:text-secondary-orange transition">Arthroscopy Surgery</a></li>
+                        <li><a href="sports-injury-treatment.html" class="text-gray-300 hover:text-secondary-orange transition">Sports Injury</a></li>
+                    </ul>
+                </div>
+
+                <!-- Google Map Location -->
+                <div>
+                    <h3 class="text-lg sm:text-xl font-bold mb-3 sm:mb-4">Google Map Location</h3>
+                    <div class="w-full h-48 rounded-lg overflow-hidden mb-4">
+                        <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3597.8791470392547!2d85.13465931501265!3d25.611751983722707!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x39ed58dce0d93279%3A0x4c204c8a22b2b576!2sDr.%20Ashwini%20Gaurav!5e0!3m2!1sen!2sin!4v1234567890" width="100%" height="100%" style="border:0;" allowfullscreen="" loading="lazy"></iframe>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Copyright -->
+            <div class="border-t border-gray-700 mt-6 sm:mt-8 pt-4 sm:pt-6 text-center text-gray-400 text-xs sm:text-sm">
+                <p>&copy; 2025 OrthoPatna - Dr. Manish Ranjan. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Fixed WhatsApp Button (Bottom Right) -->
+    <a href="https://wa.me/917991153348" target="_blank" class="fixed bottom-6 right-6 w-14 h-14 bg-green-500 hover:bg-green-600 rounded-full flex items-center justify-center shadow-lg transition z-50" aria-label="WhatsApp">
+        <i class="fab fa-whatsapp text-white text-3xl"></i>
+    </a>
+
+    <!-- Fixed Call Button (Bottom Right, above WhatsApp) -->
+    <a href="tel:+91-7991153348" class="fixed bottom-24 right-6 w-14 h-14 bg-primary-blue hover:bg-blue-700 rounded-full flex items-center justify-center shadow-lg transition z-50" aria-label="Call">
+        <i class="fas fa-phone-alt text-white text-2xl"></i>
+    </a>
+
+</body>
+</html>
+

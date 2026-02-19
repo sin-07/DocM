@@ -1,18 +1,17 @@
 /*
 ==========================================
-  CREATE ADMIN USER
+  CREATE ADMIN USER (MongoDB)
   Run this script to create a new admin user
   Usage: node create-admin.js
 ==========================================
 */
 
 const bcrypt = require('bcrypt');
-const mysql = require('mysql2/promise');
+const mongoose = require('mongoose');
 require('dotenv').config();
 
 async function createAdmin() {
     try {
-        // Get admin credentials from user input
         const readline = require('readline').createInterface({
             input: process.stdin,
             output: process.stdout
@@ -21,37 +20,45 @@ async function createAdmin() {
         const question = (query) => new Promise((resolve) => readline.question(query, resolve));
 
         console.log('\n=== CREATE ADMIN USER ===\n');
-        
+
         const email = await question('Enter admin email: ');
         const password = await question('Enter admin password: ');
-        
+
         readline.close();
 
-        // Connect to database
-        const connection = await mysql.createConnection({
-            host: process.env.DB_HOST,
-            user: process.env.DB_USER,
-            password: process.env.DB_PASSWORD,
-            database: process.env.DB_NAME
-        });
+        // Connect to MongoDB
+        const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://aniketsingh9322_db_user:VUFHymiDJAq45jOf@cluster0.2cnpaeo.mongodb.net/doctor_manish_db?appName=Cluster0';
+        await mongoose.connect(MONGODB_URI);
+        console.log('\n✅ Connected to MongoDB');
 
-        console.log('\n✅ Connected to database');
+        // Load Admin model
+        const Admin = require('./models/Admin');
+
+        // Check if admin already exists
+        const existing = await Admin.findOne({ email: email.toLowerCase() });
+        if (existing) {
+            console.log('⚠️  Admin with this email already exists!');
+            await mongoose.disconnect();
+            process.exit(1);
+        }
 
         // Hash password
         const hashedPassword = await bcrypt.hash(password, 10);
         console.log('🔒 Password hashed');
 
-        // Insert admin
-        const [result] = await connection.execute(
-            'INSERT INTO admins (email, password) VALUES (?, ?)',
-            [email, hashedPassword]
-        );
+        // Create admin
+        const admin = new Admin({
+            email: email.toLowerCase(),
+            password: hashedPassword
+        });
+
+        const saved = await admin.save();
 
         console.log(`✅ Admin user created successfully!`);
         console.log(`   Email: ${email}`);
-        console.log(`   ID: ${result.insertId}\n`);
+        console.log(`   ID: ${saved._id}\n`);
 
-        await connection.end();
+        await mongoose.disconnect();
         process.exit(0);
 
     } catch (error) {

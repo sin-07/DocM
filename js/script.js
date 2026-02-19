@@ -591,24 +591,10 @@ const verticalCarousel = new VerticalCarousel('.vertical-carousel');
 // FAQ ACCORDION
 // ==========================================
 
-const accordionHeaders = document.querySelectorAll('.accordion-header');
+// Pattern 1: index.html FAQ (.faq-question / .faq-answer with chevron icon)
+// Pattern 1: index.html FAQ - handled by inline toggleIndexFaq function
 
-accordionHeaders.forEach(header => {
-    header.addEventListener('click', function() {
-        const accordionItem = this.parentElement;
-        const isActive = accordionItem.classList.contains('active');
-        
-        // Close all accordion items
-        document.querySelectorAll('.accordion-item').forEach(item => {
-            item.classList.remove('active');
-        });
-        
-        // Open clicked item if it wasn't active
-        if (!isActive) {
-            accordionItem.classList.add('active');
-        }
-    });
-});
+// Pattern 2: Service page FAQs handled by inline script in each HTML page
 
 // ==========================================
 // APPOINTMENT MODAL
@@ -1174,6 +1160,40 @@ window.addEventListener('scroll', debounce(animateOnScroll, 50));
 // FAQ ACCORDION FUNCTIONALITY
 // ==========================================
 
+// Helper function to close FAQ with animation
+function closeFaqWithAnimation(answer, icon, iconType = 'chevron') {
+    if (!answer.classList.contains('hidden')) {
+        answer.classList.add('closing');
+        setTimeout(() => {
+            answer.classList.add('hidden');
+            answer.classList.remove('closing');
+        }, 300);
+        
+        if (icon) {
+            if (iconType === 'chevron') {
+                icon.style.transform = 'rotate(0deg)';
+            } else {
+                icon.classList.remove('fa-minus', 'text-secondary-orange');
+                icon.classList.add('fa-plus', 'text-primary-blue');
+            }
+        }
+    }
+}
+
+// Helper function to open FAQ with animation
+function openFaqWithAnimation(answer, icon, iconType = 'chevron') {
+    answer.classList.remove('hidden', 'closing');
+    
+    if (icon) {
+        if (iconType === 'chevron') {
+            icon.style.transform = 'rotate(180deg)';
+        } else {
+            icon.classList.remove('fa-plus', 'text-primary-blue');
+            icon.classList.add('fa-minus', 'text-secondary-orange');
+        }
+    }
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     // Event delegation for FAQ (main and injury)
     document.body.addEventListener('click', function(e) {
@@ -1185,29 +1205,29 @@ document.addEventListener('DOMContentLoaded', function() {
                 answer = question.parentElement.querySelector('.faq-answer');
             }
             const icon = question.querySelector('i');
+            
             if (answer) {
                 const isCurrentlyHidden = answer.classList.contains('hidden');
-                // Close all other main FAQs
+                
+                // Close all other main FAQs with animation
                 document.querySelectorAll('.faq-answer').forEach(otherAnswer => {
                     if (otherAnswer !== answer) {
-                        otherAnswer.classList.add('hidden');
                         const otherQuestion = otherAnswer.previousElementSibling;
-                        if (otherQuestion) {
-                            const otherIcon = otherQuestion.querySelector('i');
-                            if (otherIcon && otherIcon.classList.contains('fa-chevron-down')) {
-                                otherIcon.style.transform = 'rotate(0deg)';
-                            }
-                        }
+                        const otherIcon = otherQuestion ? otherQuestion.querySelector('i') : null;
+                        closeFaqWithAnimation(otherAnswer, otherIcon, 'chevron');
                     }
                 });
-                // Toggle current FAQ
-                answer.classList.toggle('hidden');
-                if (icon && icon.classList.contains('fa-chevron-down')) {
-                    icon.style.transform = answer.classList.contains('hidden') ? 'rotate(0deg)' : 'rotate(180deg)';
+                
+                // Toggle current FAQ with animation
+                if (isCurrentlyHidden) {
+                    openFaqWithAnimation(answer, icon, 'chevron');
+                } else {
+                    closeFaqWithAnimation(answer, icon, 'chevron');
                 }
             }
             e.preventDefault();
         }
+        
         // Injury FAQ: h4.cursor-pointer
         if (e.target.closest('h4.cursor-pointer')) {
             const header = e.target.closest('h4.cursor-pointer');
@@ -1216,32 +1236,26 @@ document.addEventListener('DOMContentLoaded', function() {
                 answer = header.parentElement.querySelector('div');
             }
             const icon = header.querySelector('i');
+            
             if (answer) {
                 const isHidden = answer.classList.contains('hidden');
-                // Close all other injury FAQs
+                
+                // Close all other injury FAQs with animation
                 document.querySelectorAll('h4.cursor-pointer').forEach(otherHeader => {
                     if (otherHeader !== header) {
                         let otherAnswer = otherHeader.nextElementSibling;
                         if (otherAnswer && otherAnswer.tagName === 'DIV') {
-                            otherAnswer.classList.add('hidden');
                             const otherIcon = otherHeader.querySelector('i');
-                            if (otherIcon) {
-                                otherIcon.classList.remove('fa-minus', 'text-secondary-orange');
-                                otherIcon.classList.add('fa-plus', 'text-primary-blue');
-                            }
+                            closeFaqWithAnimation(otherAnswer, otherIcon, 'plusminus');
                         }
                     }
                 });
-                // Toggle current FAQ
-                answer.classList.toggle('hidden');
-                if (icon) {
-                    if (isHidden) {
-                        icon.classList.remove('fa-plus', 'text-primary-blue');
-                        icon.classList.add('fa-minus', 'text-secondary-orange');
-                    } else {
-                        icon.classList.remove('fa-minus', 'text-secondary-orange');
-                        icon.classList.add('fa-plus', 'text-primary-blue');
-                    }
+                
+                // Toggle current FAQ with animation
+                if (isHidden) {
+                    openFaqWithAnimation(answer, icon, 'plusminus');
+                } else {
+                    closeFaqWithAnimation(answer, icon, 'plusminus');
                 }
             }
             e.preventDefault();

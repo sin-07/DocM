@@ -65,8 +65,10 @@ function createGalleryPhotoElement(photo) {
     const div = document.createElement('div');
     div.className = 'gallery-item';
     
-    // Construct full image URL (backend serves from /uploads/)
-    const imageUrl = `${API_URL.replace('/api', '')}${photo.image_url}`;
+    // Use Cloudinary URL directly if absolute, otherwise prepend backend URL
+    const imageUrl = photo.imageUrl && photo.imageUrl.startsWith('http')
+        ? photo.imageUrl
+        : `${API_URL.replace('/api', '')}${photo.imageUrl || ''}`;
     
     div.innerHTML = `
         <img 

@@ -1,52 +1,43 @@
 /*
 ==========================================
-  GALLERY ROUTES
+  GALLERY ROUTES (MongoDB + Cloudinary)
 ==========================================
 */
 
 const express = require('express');
 const router = express.Router();
 const multer = require('multer');
-const path = require('path');
-const fs = require('fs');
+const { v2: cloudinary } = require('cloudinary');
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
+const Gallery = require('../models/Gallery');
 
-// Configure file upload
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        const uploadDir = path.join(__dirname, '../uploads');
-        if (!fs.existsSync(uploadDir)) {
-            fs.mkdirSync(uploadDir, { recursive: true });
-        }
-        cb(null, uploadDir);
-    },
-    filename: (req, file, cb) => {
-        const uniqueName = Date.now() + '-' + Math.round(Math.random() * 1E9) + path.extname(file.originalname);
-        cb(null, uniqueName);
+// Configure Cloudinary
+cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET
+});
+
+// Configure Cloudinary storage for multer
+const storage = new CloudinaryStorage({
+    cloudinary,
+    params: {
+        folder: 'doctor-manish-gallery',
+        allowed_formats: ['jpg', 'jpeg', 'png', 'gif', 'webp'],
+        transformation: [{ width: 1200, height: 1200, crop: 'limit', quality: 'auto' }]
     }
 });
 
-const upload = multer({ 
+const upload = multer({
     storage,
-    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
-    fileFilter: (req, file, cb) => {
-        const allowedTypes = /jpeg|jpg|png|gif|webp/;
-        const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
-        const mimetype = allowedTypes.test(file.mimetype);
-        
-        if (extname && mimetype) {
-            cb(null, true);
-        } else {
-            cb(new Error('Only image files are allowed!'));
-        }
-    }
+    limits: { fileSize: 5 * 1024 * 1024 }
 });
 
 // Get all gallery images
 router.get('/', async (req, res) => {
     try {
-        const db = req.app.locals.db;
-        const [results] = await db.query('SELECT * FROM gallery ORDER BY created_at DESC');
-        res.json(results);
+        const images = await Gallery.find().sort({ createdAt: -1 });
+        res.json(images);
     } catch (error) {
         console.error('Error fetching gallery:', error);
         res.status(500).json({ error: 'Failed to fetch gallery', message: error.message });
@@ -56,71 +47,68 @@ router.get('/', async (req, res) => {
 // Get images by category
 router.get('/category/:category', async (req, res) => {
     try {
-        const db = req.app.locals.db;
-        const { category } = req.params;
-        const [results] = await db.query('SELECT * FROM gallery WHERE category = ? ORDER BY created_at DESC', [category]);
-        res.json(results);
+        const images = await Gallery.find({ category: req.params.category }).sort({ createdAt: -1 });
+        res.json(images);
     } catch (error) {
         console.error('Error fetching gallery by category:', error);
         res.status(500).json({ error: 'Failed to fetch gallery', message: error.message });
     }
 });
 
-// Upload image
+// Upload image (to Cloudinary)
 router.post('/', upload.single('image'), async (req, res) => {
     try {
         if (!req.file) {
             return res.status(400).json({ error: 'No image file provided' });
         }
-        
-        const db = req.app.locals.db;
+
         const { category, description } = req.body;
-        const imageUrl = `/uploads/${req.file.filename}`;
-        
-        const [result] = await db.query(
-            'INSERT INTO gallery (image_url, category, description) VALUES (?, ?, ?)',
-            [imageUrl, category || 'general', description || '']
-        );
-        
-        res.json({ 
+        const imageUrl = req.file.path; // Cloudinary URL
+        const cloudinaryId = req.file.filename; // Cloudinary public_id
+
+        const image = new Gallery({
+            imageUrl,
+            cloudinaryId,
+            category: category || 'general',
+            description: description || ''
+        });
+
+        const saved = await image.save();
+
+        res.json({
             success: true,
-            id: result.insertId, 
-            imageUrl, 
-            category: category || 'general', 
-            description: description || '',
+            id: saved._id,
+            imageUrl,
+            category: saved.category,
+            description: saved.description,
             message: 'Image uploaded successfully'
         });
-        
+
     } catch (error) {
         console.error('Error uploading image:', error);
         res.status(500).json({ error: 'Failed to upload image', message: error.message });
     }
 });
 
-// Delete image
+// Delete image (from Cloudinary + DB)
 router.delete('/:id', async (req, res) => {
     try {
-        const db = req.app.locals.db;
-        const { id } = req.params;
-        
-        // Get image info first to delete file
-        const [images] = await db.query('SELECT image_url FROM gallery WHERE id = ?', [id]);
-        
-        if (images.length === 0) {
+        const image = await Gallery.findById(req.params.id);
+
+        if (!image) {
             return res.status(404).json({ error: 'Image not found' });
         }
-        
-        // Delete from database
-        await db.query('DELETE FROM gallery WHERE id = ?', [id]);
-        
-        // Delete physical file
-        const imagePath = path.join(__dirname, '..', images[0].image_url);
-        if (fs.existsSync(imagePath)) {
-            fs.unlinkSync(imagePath);
+
+        // Delete from Cloudinary
+        if (image.cloudinaryId) {
+            await cloudinary.uploader.destroy(image.cloudinaryId);
         }
-        
+
+        // Delete from database
+        await Gallery.findByIdAndDelete(req.params.id);
+
         res.json({ success: true, message: 'Image deleted successfully' });
-        
+
     } catch (error) {
         console.error('Error deleting image:', error);
         res.status(500).json({ error: 'Failed to delete image', message: error.message });

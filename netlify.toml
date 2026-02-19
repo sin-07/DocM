@@ -2,8 +2,14 @@
   publish = "."
   command = ""
 
-# Uncomment below for SPA routing
-#[[redirects]]
-#  from = "/*"
-#  to = "/index.html"
-#  status = 200
+# Redirect root to html/index.html
+[[redirects]]
+  from = "/"
+  to = "/html/index.html"
+  status = 200
+
+# Redirect *.html at root level to html/ folder
+[[redirects]]
+  from = "/*.html"
+  to = "/html/:splat.html"
+  status = 200

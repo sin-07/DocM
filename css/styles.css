@@ -215,13 +215,53 @@ iframe {
 }
 
 /* FAQ Accordion Mobile */
-/* FAQ Accordion Visibility Fix */
+/* FAQ Accordion Animations */
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        max-height: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        max-height: 1000px;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 1;
+        max-height: 1000px;
+        transform: translateY(0);
+    }
+    to {
+        opacity: 0;
+        max-height: 0;
+        transform: translateY(-10px);
+    }
+}
+
+.faq-answer {
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
 .faq-answer.hidden {
-    display: none !important;
+    display: none;
+    opacity: 0;
+    max-height: 0;
 }
+
 .faq-answer:not(.hidden) {
-    display: block !important;
+    display: block;
+    animation: slideDown 0.4s ease-out forwards;
 }
+
+.faq-answer.closing {
+    animation: slideUp 0.3s ease-in forwards;
+}
+
 .faq-question {
     cursor: pointer;
     transition: background-color 0.3s ease;
@@ -231,8 +271,25 @@ iframe {
     transition: transform 0.3s ease;
 }
 
-.faq-answer {
-    transition: max-height 0.3s ease;
+/* Service page FAQ (h4.cursor-pointer pattern) */
+h4.cursor-pointer + div {
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+h4.cursor-pointer + div.hidden {
+    display: none;
+    opacity: 0;
+    max-height: 0;
+}
+
+h4.cursor-pointer + div:not(.hidden) {
+    display: block;
+    animation: slideDown 0.4s ease-out forwards;
+}
+
+h4.cursor-pointer + div.closing {
+    animation: slideUp 0.3s ease-in forwards;
 }
 
 @media (max-width: 768px) {

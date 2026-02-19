@@ -1,12 +1,14 @@
 /*
 ==========================================
   API CONFIGURATION
-  MySQL Backend Connection
+  MongoDB Backend Connection
 ==========================================
 */
 
-// API Base URL - Change this to your backend server URL
-const API_URL = 'http://localhost:3000/api';
+// API Base URL - Auto-detects production vs local
+const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? 'http://localhost:3000/api'
+    : 'https://YOUR_BACKEND_URL/api';  // TODO: Update when backend is deployed
 
 // API Endpoints
 const API_ENDPOINTS = {

@@ -308,7 +308,7 @@ async function loadGallery() {
         photos.forEach((photo) => {
             totalSize += photo.size || 0;
             
-            const photoDate = photo.created_at ? new Date(photo.created_at) : null;
+            const photoDate = photo.createdAt ? new Date(photo.createdAt) : null;
             if (!latestUpload || (photoDate && photoDate > latestUpload)) {
                 latestUpload = photoDate;
             }
@@ -337,18 +337,18 @@ function createPhotoCard(photo) {
     const card = document.createElement('div');
     card.className = 'photo-card bg-white shadow-lg';
     
-    const uploadDate = photo.created_at 
-        ? new Date(photo.created_at).toLocaleDateString('en-US', { 
+    const uploadDate = photo.createdAt 
+        ? new Date(photo.createdAt).toLocaleDateString('en-US', { 
             year: 'numeric', 
             month: 'short', 
             day: 'numeric' 
         })
         : 'Unknown date';
     
-    // Create full URL for image
-    const imageUrl = photo.image_url.startsWith('http') 
-        ? photo.image_url 
-        : `http://localhost:3000${photo.image_url}`;
+    // Create full URL for image (Cloudinary URLs are already absolute)
+    const imageUrl = photo.imageUrl && photo.imageUrl.startsWith('http') 
+        ? photo.imageUrl 
+        : `http://localhost:3000${photo.imageUrl || ''}`;
     
     card.innerHTML = `
         <img src="${imageUrl}" alt="${photo.description || 'Gallery image'}" loading="lazy">
@@ -358,7 +358,7 @@ function createPhotoCard(photo) {
                 <button onclick="viewPhoto('${imageUrl}')" class="flex-1 bg-white/20 hover:bg-white/30 text-white py-2 rounded transition text-sm">
                     <i class="fas fa-eye mr-1"></i>View
                 </button>
-                <button onclick="deletePhoto(${photo.id})" class="flex-1 bg-red-500 hover:bg-red-600 text-white py-2 rounded transition text-sm">
+                <button onclick="deletePhoto('${photo._id}')" class="flex-1 bg-red-500 hover:bg-red-600 text-white py-2 rounded transition text-sm">
                     <i class="fas fa-trash-alt mr-1"></i>Delete
                 </button>
             </div>
