@@ -10,7 +10,7 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const path = require('path');
 const dns = require('dns');
-require('dotenv').config();
+require('dotenv').config({ path: path.join(__dirname, '.env') });
 
 // Force Node.js to use Google DNS (fixes SRV lookup issues on some networks)
 dns.setDefaultResultOrder('ipv4first');
@@ -79,10 +79,15 @@ app.use((req, res) => {
     res.status(404).json({ error: 'Route not found' });
 });
 
-// Start server
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-    console.log(`🚀 Server running on http://localhost:${PORT}`);
-    console.log(`📁 Uploads directory: ${path.join(__dirname, 'uploads')}`);
-    console.log(`🌐 CORS enabled for local dev servers`);
-});
+// Start server (only when running directly, not imported by Vercel)
+if (require.main === module) {
+    const PORT = process.env.PORT || 3000;
+    app.listen(PORT, () => {
+        console.log(`🚀 Server running on http://localhost:${PORT}`);
+        console.log(`📁 Uploads directory: ${path.join(__dirname, 'uploads')}`);
+        console.log(`🌐 CORS enabled for local dev servers`);
+    });
+}
+
+// Export for Vercel serverless
+module.exports = app;

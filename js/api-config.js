@@ -8,7 +8,7 @@
 // API Base URL - Auto-detects production vs local
 const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? 'http://localhost:3000/api'
-    : 'https://YOUR_BACKEND_URL/api';  // TODO: Update when backend is deployed
+    : '/api';  // Same domain — Vercel serverless handles /api/*
 
 // API Endpoints
 const API_ENDPOINTS = {
