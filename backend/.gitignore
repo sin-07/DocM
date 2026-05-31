@@ -9,6 +9,11 @@ package-lock.json
 uploads/*
 !uploads/.gitkeep
 
+# Seed files (may contain sensitive data)
+admin-seed.json
+appointments-seed.json
+gallery-seed.json
+
 # Logs
 *.log
 npm-debug.log*

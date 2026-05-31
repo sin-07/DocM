@@ -36,20 +36,48 @@ app.use(express.urlencoded({ extended: true }));
 // Serve uploaded files
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// MongoDB Connection
+// MongoDB Connection with in-memory fallback
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://aniketsingh9322_db_user:VUFHymiDJAq45jOf@cluster0.2cnpaeo.mongodb.net/doctor_manish_db?appName=Cluster0';
 
-mongoose.connect(MONGODB_URI)
-    .then(() => {
-        console.log('✅ Connected to MongoDB Atlas');
-    })
-    .catch((err) => {
-        console.error('❌ MongoDB connection failed:', err.message);
-        console.log('\n⚠️  Please ensure:');
-        console.log('   1. Your MongoDB Atlas cluster is running');
-        console.log('   2. Your IP is whitelisted in Atlas');
-        console.log('   3. Connection string in .env is correct\n');
-    });
+let memoryServerInstance = null;
+async function connectWithFallback() {
+    try {
+        await mongoose.connect(MONGODB_URI, { connectTimeoutMS: 10000 });
+        console.log('✅ Connected to MongoDB (configured URI)');
+    } catch (err) {
+        console.warn('⚠️  MongoDB connection failed:', err.message);
+        console.log('➡️  Falling back to in-memory MongoDB for local development');
+        try {
+            const { MongoMemoryServer } = require('mongodb-memory-server');
+            memoryServerInstance = await MongoMemoryServer.create();
+            const uri = memoryServerInstance.getUri();
+            await mongoose.connect(uri);
+            console.log('✅ Connected to in-memory MongoDB');
+        } catch (memErr) {
+            console.error('❌ Failed to start in-memory MongoDB:', memErr.message || memErr);
+            process.exit(1);
+        }
+    }
+
+    // Optional seeding on startup when SEED_ON_START=true
+    if (process.env.SEED_ON_START === 'true' || process.env.SEED_ON_START === '1') {
+        try {
+            const seed = require('./seed');
+            await seed();
+        } catch (err) {
+            console.error('Seeding failed:', err.message || err);
+        }
+    }
+}
+
+connectWithFallback();
+
+// Ensure memory server is stopped on exit
+process.on('exit', async () => {
+    if (memoryServerInstance) {
+        try { await memoryServerInstance.stop(); } catch (e) { /* ignore */ }
+    }
+});
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
