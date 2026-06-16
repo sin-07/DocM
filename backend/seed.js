@@ -1,20 +1,18 @@
 /*
 ==========================================
-  BACKEND SEED SCRIPT
-  - Reads `admin-seed.json`, `appointments-seed.json`, `gallery-seed.json`
-  - Inserts sample data if collections are empty or admin missing
-  Usage:
-    node seed.js
-    SEED_ON_START=true node server.js
+    BACKEND SEED SCRIPT
+    Seeds optional data from environment variables only.
+    Usage:
+        node seed.js
+        SEED_ON_START=true node server.js
 ==========================================
 */
 
-const fs = require('fs');
 const path = require('path');
 const mongoose = require('mongoose');
 require('dotenv').config({ path: path.join(__dirname, '.env') });
 
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://aniketsingh9322_db_user:VUFHymiDJAq45jOf@cluster0.2cnpaeo.mongodb.net/doctor_manish_db?appName=Cluster0';
+const MONGODB_URI = process.env.MONGODB_URI;
 
 async function runSeed() {
     let usingInMemory = false;
@@ -39,66 +37,63 @@ async function runSeed() {
         }
     }
 
+    if (!MONGODB_URI) {
+        throw new Error('MONGODB_URI is not set');
+    }
+
     const Admin = require('./models/Admin');
     const Appointment = require('./models/Appointment');
     const Gallery = require('./models/Gallery');
 
-    // Admin
+    // Admin (optional via env)
     try {
-        const adminSeedPath = path.join(__dirname, 'admin-seed.json');
-        if (fs.existsSync(adminSeedPath)) {
-            const adminSeed = JSON.parse(fs.readFileSync(adminSeedPath, 'utf8'));
-            const existing = await Admin.findOne({ email: adminSeed.email.toLowerCase() });
+        const adminEmail = process.env.ADMIN_EMAIL;
+        const adminPasswordHash = process.env.ADMIN_PASSWORD_HASH;
+
+        if (adminEmail && adminPasswordHash) {
+            const existing = await Admin.findOne({ email: adminEmail.toLowerCase() });
             if (existing) {
-                console.log('🔁 Admin already exists:', adminSeed.email);
+                console.log('🔁 Admin already exists:', adminEmail);
             } else {
-                await Admin.create({ email: adminSeed.email.toLowerCase(), password: adminSeed.passwordHash });
-                console.log('✅ Admin seeded:', adminSeed.email);
+                await Admin.create({ email: adminEmail.toLowerCase(), password: adminPasswordHash });
+                console.log('✅ Admin seeded:', adminEmail);
             }
         } else {
-            console.log('⚠️  admin-seed.json not found — skipping admin seed');
+            console.log('ℹ️  ADMIN_EMAIL/ADMIN_PASSWORD_HASH not set — skipping admin seed');
         }
     } catch (err) {
         console.error('❌ Admin seed error:', err.message || err);
     }
 
-    // Appointments
+    // Appointments (optional via env JSON)
     try {
+        const appointmentsJson = process.env.APPOINTMENTS_SEED_JSON;
         const apptCount = await Appointment.countDocuments();
-        if (apptCount === 0) {
-            const apptPath = path.join(__dirname, 'appointments-seed.json');
-            if (fs.existsSync(apptPath)) {
-                const appts = JSON.parse(fs.readFileSync(apptPath, 'utf8'));
-                if (Array.isArray(appts) && appts.length) {
-                    await Appointment.insertMany(appts);
-                    console.log(`✅ Inserted ${appts.length} appointment(s)`);
-                }
-            } else {
-                console.log('⚠️  appointments-seed.json not found — skipping appointment seed');
+        if (apptCount === 0 && appointmentsJson) {
+            const appts = JSON.parse(appointmentsJson);
+            if (Array.isArray(appts) && appts.length) {
+                await Appointment.insertMany(appts);
+                console.log(`✅ Inserted ${appts.length} appointment(s)`);
             }
         } else {
-            console.log('🔁 Appointments collection not empty — skipping');
+            console.log('ℹ️  No appointment seed provided or collection not empty — skipping');
         }
     } catch (err) {
         console.error('❌ Appointment seed error:', err.message || err);
     }
 
-    // Gallery
+    // Gallery (optional via env JSON)
     try {
+        const galleryJson = process.env.GALLERY_SEED_JSON;
         const galleryCount = await Gallery.countDocuments();
-        if (galleryCount === 0) {
-            const galleryPath = path.join(__dirname, 'gallery-seed.json');
-            if (fs.existsSync(galleryPath)) {
-                const items = JSON.parse(fs.readFileSync(galleryPath, 'utf8'));
-                if (Array.isArray(items) && items.length) {
-                    await Gallery.insertMany(items);
-                    console.log(`✅ Inserted ${items.length} gallery item(s)`);
-                }
-            } else {
-                console.log('⚠️  gallery-seed.json not found — skipping gallery seed');
+        if (galleryCount === 0 && galleryJson) {
+            const items = JSON.parse(galleryJson);
+            if (Array.isArray(items) && items.length) {
+                await Gallery.insertMany(items);
+                console.log(`✅ Inserted ${items.length} gallery item(s)`);
             }
         } else {
-            console.log('🔁 Gallery collection not empty — skipping');
+            console.log('ℹ️  No gallery seed provided or collection not empty — skipping');
         }
     } catch (err) {
         console.error('❌ Gallery seed error:', err.message || err);

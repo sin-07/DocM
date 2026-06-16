@@ -10,7 +10,17 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const path = require('path');
 const dns = require('dns');
-require('dotenv').config({ path: path.join(__dirname, '.env') });
+const fs = require('fs');
+// Load environment variables: prefer backend/.env, otherwise fall back to repository root .env
+const backendEnv = path.join(__dirname, '.env');
+const rootEnv = path.join(__dirname, '..', '.env');
+if (fs.existsSync(backendEnv)) {
+    require('dotenv').config({ path: backendEnv });
+} else if (fs.existsSync(rootEnv)) {
+    require('dotenv').config({ path: rootEnv });
+} else {
+    require('dotenv').config();
+}
 
 // Force Node.js to use Google DNS (fixes SRV lookup issues on some networks)
 dns.setDefaultResultOrder('ipv4first');
@@ -37,10 +47,15 @@ app.use(express.urlencoded({ extended: true }));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // MongoDB Connection with in-memory fallback
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://aniketsingh9322_db_user:VUFHymiDJAq45jOf@cluster0.2cnpaeo.mongodb.net/doctor_manish_db?appName=Cluster0';
+const MONGODB_URI = process.env.MONGODB_URI;
 
 let memoryServerInstance = null;
 async function connectWithFallback() {
+    if (!MONGODB_URI) {
+        console.error('❌ MONGODB_URI is not set');
+        process.exit(1);
+    }
+
     try {
         await mongoose.connect(MONGODB_URI, { connectTimeoutMS: 10000 });
         console.log('✅ Connected to MongoDB (configured URI)');
@@ -67,6 +82,16 @@ async function connectWithFallback() {
         } catch (err) {
             console.error('Seeding failed:', err.message || err);
         }
+    }
+
+    // Start server only after DB is connected (prevents MongoNotConnectedError)
+    if (require.main === module) {
+        const PORT = process.env.PORT || 3000;
+        app.listen(PORT, () => {
+            console.log(`🚀 Server running on http://localhost:${PORT}`);
+            console.log(`📁 Uploads directory: ${path.join(__dirname, 'uploads')}`);
+            console.log(`🌐 CORS enabled for local dev servers`);
+        });
     }
 }
 
@@ -106,16 +131,6 @@ app.use((err, req, res, next) => {
 app.use((req, res) => {
     res.status(404).json({ error: 'Route not found' });
 });
-
-// Start server (only when running directly, not imported by Vercel)
-if (require.main === module) {
-    const PORT = process.env.PORT || 3000;
-    app.listen(PORT, () => {
-        console.log(`🚀 Server running on http://localhost:${PORT}`);
-        console.log(`📁 Uploads directory: ${path.join(__dirname, 'uploads')}`);
-        console.log(`🌐 CORS enabled for local dev servers`);
-    });
-}
 
 // Export for Vercel serverless
 module.exports = app;

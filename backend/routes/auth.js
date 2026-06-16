@@ -10,6 +10,14 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const Admin = require('../models/Admin');
 
+function requireJwtSecret() {
+    const secret = process.env.JWT_SECRET;
+    if (!secret) {
+        throw new Error('JWT_SECRET is not set');
+    }
+    return secret;
+}
+
 // Admin Login
 router.post('/login', async (req, res) => {
     try {
@@ -33,7 +41,7 @@ router.post('/login', async (req, res) => {
 
         const token = jwt.sign(
             { id: admin._id, email: admin.email },
-            process.env.JWT_SECRET || 'doctor-manish-secret-key',
+            requireJwtSecret(),
             { expiresIn: '24h' }
         );
 
@@ -59,7 +67,7 @@ router.post('/verify', async (req, res) => {
             return res.status(401).json({ error: 'No token provided' });
         }
 
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'doctor-manish-secret-key');
+        const decoded = jwt.verify(token, requireJwtSecret());
         res.json({ valid: true, email: decoded.email });
 
     } catch (error) {
@@ -76,7 +84,7 @@ const verifyToken = (req, res, next) => {
     }
 
     try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'doctor-manish-secret-key');
+        const decoded = jwt.verify(token, requireJwtSecret());
         req.user = decoded;
         next();
     } catch (error) {

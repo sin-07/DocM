@@ -20,7 +20,11 @@ async function createAdminNonInteractive() {
             process.exit(1);
         }
 
-        const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://aniketsingh9322_db_user:VUFHymiDJAq45jOf@cluster0.2cnpaeo.mongodb.net/doctor_manish_db?appName=Cluster0';
+        const MONGODB_URI = process.env.MONGODB_URI;
+        if (!MONGODB_URI) {
+            console.error('ERROR: MONGODB_URI environment variable is required.');
+            process.exit(1);
+        }
         await mongoose.connect(MONGODB_URI);
         console.log('✅ Connected to MongoDB');
 

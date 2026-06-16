@@ -19,7 +19,7 @@ npm run dev
 
 Seeding data
 
-The backend includes convenience tools to create or seed admin and sample data.
+The backend includes convenience tools to create or seed admin and sample data. Provide data through environment variables only.
 
 - Create admin interactively:
 
@@ -35,7 +35,7 @@ node create-admin.js
 $env:ADMIN_EMAIL='you@example.com'; $env:ADMIN_PASSWORD='s3cret'; node create-admin-noninteractive.js
 ```
 
-- Run full seed (admin + sample appointments + gallery):
+- Run full seed (admin + optional appointments + gallery):
 
 ```powershell
 cd backend
@@ -44,27 +44,16 @@ npm run seed
 
 Notes about seeding
 
-- If your configured `MONGODB_URI` in `.env` is unreachable, the seed runner will fall back to an in-memory MongoDB (for local testing). That in-memory database is ephemeral and will not persist after the process exits.
+- If your configured `MONGODB_URI` is unreachable, the backend cannot seed or authenticate.
 - To seed your real database, make sure:
-  - `.env` `MONGODB_URI` is correct
+  - `MONGODB_URI` is correct
   - Your current IP is whitelisted in MongoDB Atlas Network Access
   - DNS/SRV lookups are allowed from your network
 
 Security
 
-- Do NOT commit `.env` or seed JSON files to a public repository. The `backend/.gitignore` ignores `.env` and `*-seed.json` files by default.
-- The admin password stored in `admin-seed.json` is hashed using `bcrypt`. Still, treat that file as sensitive.
-
-Removing seed files
-
-After importing or seeding data into your persistent DB, remove or move the seed files out of the repository:
-
-```powershell
-# from project root
-Remove-Item backend\admin-seed.json -Force
-Remove-Item backend\appointments-seed.json -Force
-Remove-Item backend\gallery-seed.json -Force
-```
+- Do NOT commit `.env` or any credential-bearing files to a public repository.
+- The backend is configured to read secrets from environment variables only.
 
 Support
 
