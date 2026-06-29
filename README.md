@@ -1,10 +1,18 @@
 # DocM — Doctor Manish Website
 
-This repository contains a static frontend and an Express + MongoDB backend for the Doctor Manish website.
+A professional medical website for Dr. Manish featuring orthopedic services, patient appointments, and an admin dashboard.
 
-Quick start
+## Features
 
-1. Backend
+- Service pages for orthopedic treatments
+- Online appointment booking
+- Admin dashboard for managing appointments
+- Image gallery management
+- Responsive design
+
+## Quick Start
+
+### Backend
 
 ```powershell
 cd backend
@@ -12,11 +20,18 @@ npm install
 npm run dev
 ```
 
-2. Frontend
+### Frontend
 
 Open `html/index.html` or use a static server to preview the site.
 
-Security & setup
+## Tech Stack
+
+- **Frontend**: HTML, CSS, JavaScript
+- **Backend**: Node.js, Express.js
+- **Database**: MongoDB
+- **Authentication**: JWT
+
+## Security & Setup
 
 - Keep `.env` out of source control. Configure `MONGODB_URI`, `JWT_SECRET`, `FRONTEND_URL`, and any Cloudinary values in your deployment environment.
 - Use the backend scripts only with environment variables; do not commit credentials or seed data files.
